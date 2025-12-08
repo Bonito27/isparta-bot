@@ -23,11 +23,9 @@ jobs:
         run: |
           pip install requests beautifulsoup4 firebase-admin
 
-      - name: Gizli Anahtarı Oluştur
-        env:
-          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+      - name: Gizli Anahtarı Oluştur (Son Düzeltme)
+        # Bash shell'de tek tırnak kullanarak gizli verinin bozulması engellenir.
         run: |
-          echo "$FIREBASE_KEY" > serviceAccountKey.json
-
+          echo '${{ secrets.FIREBASE_KEY }}' > serviceAccountKey.json
       - name: Botu Çalıştır
         run: python main.py
