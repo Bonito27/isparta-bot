@@ -1,0 +1,33 @@
+name: IspartaApp Günlük Bot
+
+on:
+  schedule:
+    # Her sabah Türkiye saatiyle 09:00'da çalışır (06:00 UTC)
+    - cron: "0 6 * * *"
+  # GitHub sitesinden butona basarak elle tetiklemek için:
+  workflow_dispatch:
+
+jobs:
+  calistir:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodları Çek
+        uses: actions/checkout@v3
+
+      - name: Python Kurulumu
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Kütüphaneleri Yükle
+        run: |
+          pip install requests beautifulsoup4 firebase-admin
+
+      - name: Gizli Anahtarı Oluştur
+        env:
+          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+        run: |
+          echo "$FIREBASE_KEY" > serviceAccountKey.json
+
+      - name: Botu Çalıştır
+        run: main.py
