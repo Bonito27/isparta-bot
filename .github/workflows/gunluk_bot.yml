@@ -30,4 +30,4 @@ jobs:
           echo "$FIREBASE_KEY" > serviceAccountKey.json
 
       - name: Botu Çalıştır
-        run: main.py
+        run: python main.py
