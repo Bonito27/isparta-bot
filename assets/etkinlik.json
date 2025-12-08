@@ -1,0 +1,142 @@
+[
+    {
+        "sanatci": "Gökhan Türkmen",
+        "tarih": "24 Aralık Çar - 20:30",
+        "mekan": "Süleyman Demirel Kongre Merkezi",
+        "price": "1250 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/gokhan-turkmen-konseri-16066.jpg"
+    },
+    {
+        "sanatci": "Sagopa Kajmer Konseri",
+        "tarih": "15 Şubat Paz - 22:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "880 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/sagopa-kajmer-konseri-88627.jpg"
+    },
+    {
+        "sanatci": "Şifa Niyetine Oyunu",
+        "tarih": "23 Aralık Sal - 20:00",
+        "mekan": "Isparta Belediyesi Kültür Merkezi",
+        "price": "850 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/sifa-niyetine-oyunu-55707.jpeg"
+    },
+    {
+        "sanatci": "Şakşakçılar",
+        "tarih": "24 Aralık Çar - 20:30",
+        "mekan": "Isparta Belediyesi Kültür Merkezi Gül Salonu",
+        "price": "945 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/saksakcilar-89761.png"
+    },
+    {
+        "sanatci": "Ati242 Konseri",
+        "tarih": "13 Şubat Cum - 20:00",
+        "mekan": "Süleyman Demirel Kongre Merkezi",
+        "price": "850 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/ati242-konseri-24428.jpg"
+    },
+    {
+        "sanatci": "Mavi Gri Konseri",
+        "tarih": "09 Aralık Sal - 21:30",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "520 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/mavi-gri-konseri-18933.jpg"
+    },
+    {
+        "sanatci": "Tuğkan Konseri",
+        "tarih": "17 Aralık Çar - 22:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "350 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/tugkan-konseri-29335.jpg"
+    },
+    {
+        "sanatci": "Euro Party: Geçmişe Yolculuk",
+        "tarih": "11 Aralık Per - 22:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "250 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/euro-party-92028.jpg"
+    },
+    {
+        "sanatci": "Tutunamayanlar",
+        "tarih": "17 Aralık Çar - 20:30",
+        "mekan": "Süleyman Demirel Üniversitesi M.Lütfü Çakmakçı Kültür Merkezi",
+        "price": "750 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/tutunamayanlar-95861.png"
+    },
+    {
+        "sanatci": "Çakal",
+        "tarih": "10 Ocak Cts - 21:00",
+        "mekan": "İYAŞ Süleyman Demirel Kongre Merkezi",
+        "price": "750 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/cakal-58379.jpeg"
+    },
+    {
+        "sanatci": "Hamlet Oyunu",
+        "tarih": "20 Aralık Cts - 20:00",
+        "mekan": "Isparta Belediyesi Kültür Merkezi Lavanta Salonu",
+        "price": "350 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/hamlet-oyunu-34935.jpg"
+    },
+    {
+        "sanatci": "Erkan Oğur & İsmail Hakkı Demircioğlu Konseri",
+        "tarih": "11 Ocak Paz - 19:00",
+        "mekan": "Isparta Belediyesi Kültür Merkezi Gül Salonu",
+        "price": "900 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/erkan-ogur-ismail-hakki-demircioglu-konseri-23237.png"
+    },
+    {
+        "sanatci": "Sancak Konseri",
+        "tarih": "26 Aralık Cum - 22:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "550 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/sancak-konseri-83425.jpg"
+    },
+    {
+        "sanatci": "Pop Delisi: %100 Türkçe Pop Partisi",
+        "tarih": "25 Aralık Per - 22:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "250 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/pop-delisi-100-turkce-pop-partisi--15379.jpg"
+    },
+    {
+        "sanatci": "Eller Yukarı",
+        "tarih": "16 Aralık Sal - 20:00",
+        "mekan": "Isparta Belediyesi Kültür Merkezi",
+        "price": "630 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/eller-yukari-50060.jpg"
+    },
+    {
+        "sanatci": "Stabil Konseri",
+        "tarih": "09 Ocak Cum - 22:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "490 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/stabil-konseri-15253.jfif"
+    },
+    {
+        "sanatci": "Mekanda Sanat Var: Heykel ve Resim Workshopları | Isparta",
+        "tarih": "10 Aralık Çar - 19:00",
+        "mekan": "Wuhu Coffee & Workshop",
+        "price": "350 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/msv-isparta-76967.png"
+    },
+    {
+        "sanatci": "Poizi Konseri",
+        "tarih": "18 Nisan Cts - 21:00",
+        "mekan": "İYAŞ Süleyman Demirel Kongre Merkezi",
+        "price": "750 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/poizi-konseri-97742.jpg"
+    },
+    {
+        "sanatci": "Turkish Delnight",
+        "tarih": "19 Aralık Cum - 21:00",
+        "mekan": "Holly Stone Performance Hall Isparta",
+        "price": "300 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/turkish-delnight-36890.png"
+    },
+    {
+        "sanatci": "Çizmeli Kedi Çocuk Oyun",
+        "tarih": "18 Ocak Paz - 15:00",
+        "mekan": "Süleyman Demirel Üniversitesi M.Lütfü Çakmakçı Kültür Merkezi",
+        "price": "350 TL",
+        "image": "https://cdn.bubilet.com.tr/cdn-cgi/image/format=auto,width=3840,quality=80/https://cdn.bubilet.com.tr/files/Etkinlik/cizmeli-kedi-cocuk-oyun-82964.png"
+    }
+]

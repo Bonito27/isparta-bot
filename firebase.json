@@ -1,0 +1,40 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ispartaapp",
+          "appId": "1:551839504562:android:a70b84579622c07f8d91ab",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ispartaapp",
+          "configurations": {
+            "android": "1:551839504562:android:a70b84579622c07f8d91ab",
+            "ios": "1:551839504562:ios:53a7f8e574eb95a78d91ab",
+            "macos": "1:551839504562:ios:53a7f8e574eb95a78d91ab",
+            "web": "1:551839504562:web:f67ea2a7d93a7ea78d91ab",
+            "windows": "1:551839504562:web:5d205401b2d0d0c28d91ab"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "venv",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "runtime": "python313"
+    }
+  ]
+}

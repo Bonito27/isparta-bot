@@ -1,0 +1,65 @@
+[
+    {
+        "eczane_adi": "Candemir Eczanesi",
+        "telefon": "0 (246) 311-40-29",
+        "adres": "Cami Mahallesi, Keskinler Sokak No:5  / Isparta",
+        "ilce": "Eğirdir",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-egirdir-candemir-eczanesi"
+    },
+    {
+        "eczane_adi": "Erol Eczanesi",
+        "telefon": "0 (246) 381-37-46",
+        "adres": "Muharrem Mahallesi, Hüseyin Avni Paşa Caddesi, No:13  / Isparta",
+        "ilce": "Gelendost",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-gelendost-erol-eczanesi"
+    },
+    {
+        "eczane_adi": "Onur Eczanesi",
+        "telefon": "0 (246) 232-81-98",
+        "adres": "Pirimehmet Mahallesi, 1724 Sokak No:8  / Isparta» Davraz Yaşam Hastanesi karşısı",
+        "ilce": "Merkez",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-merkez-onur-eczanesi"
+    },
+    {
+        "eczane_adi": "Ece Eczanesi",
+        "telefon": "0 (246) 242-05-72",
+        "adres": "Ayazmana Mahallesi, 124.Cadde No:93  / Isparta» Halıkent Sağlık Ocağı karşısı",
+        "ilce": "Merkez",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-merkez-ece-eczanesi"
+    },
+    {
+        "eczane_adi": "Dilek Eczanesi",
+        "telefon": "0 (246) 218-27-77",
+        "adres": "Davraz Mahallesi, 104.Cadde No:40A/Z-05  / Isparta» Şehir Hastanesi karşısı",
+        "ilce": "Merkez",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-merkez-dilek-eczanesi"
+    },
+    {
+        "eczane_adi": "Keçiborlu Eczanesi",
+        "telefon": "0 (246) 541-40-54",
+        "adres": "Hasanbey Mahallesi, Gürsel Caddesi, No:10  / Isparta",
+        "ilce": "Keçiborlu",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-keciborlu-keciborlu-eczanesi"
+    },
+    {
+        "eczane_adi": "İsmet Tosun Eczanesi",
+        "telefon": "0 (246) 411-33-53",
+        "adres": "Ulvikale Mahallesi, 115 Sait Bilgiç Caddesi No:22/C  / Isparta» 2.Hastane Caddesi-Acil karşısı",
+        "ilce": "Şarkikaraağaç",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-sarkikaraagac-ismet-tosun-eczanesi"
+    },
+    {
+        "eczane_adi": "Heybelioğlu Eczanesi",
+        "telefon": "0 (246) 511-44-18",
+        "adres": "Taşmescit Mahallesi, Dr.Tahsin Tola Caddesi, No:2/C  / Isparta",
+        "ilce": "Senirkent",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-senirkent-heybelioglu-eczanesi"
+    },
+    {
+        "eczane_adi": "Denizhan Eczanesi",
+        "telefon": "0 (246) 441-41-70",
+        "adres": "Kaşyukarı Mahallesi, Hastane Caddesi, No:15/2  / Isparta",
+        "ilce": "Yalvaç",
+        "detay_url": "https://www.eczaneler.gen.tr/eczane/isparta-yalvac-denizhan-eczanesi"
+    }
+]
