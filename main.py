@@ -7,14 +7,13 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 
 # --- 1. FIREBASE BAĞLANTISI ---
-# serviceAccountKey.json dosyasının bu kodla AYNI KLASÖRDE olması şarttır.
 try:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
     db = firestore.client()
-    print("✅ Firebase bağlantısı başarılı!")
+    print(" Firebase bağlantısı başarılı!")
 except Exception as e:
-    print(f"🚨 Firebase Hatası: {e}")
+    print(f" Firebase Hatası: {e}")
     print("Lütfen 'serviceAccountKey.json' dosyasını kontrol et.")
     exit() # Bağlantı yoksa çalışmayı durdur
 
@@ -30,7 +29,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     Belirtilen koleksiyondaki eski verileri siler ve yeni listeyi yükler.
     Böylece her zaman en güncel liste veritabanında olur.
     """
-    print(f"⏳ '{koleksiyon_adi}' koleksiyonu güncelleniyor...")
+    print(f" '{koleksiyon_adi}' koleksiyonu güncelleniyor...")
     
     batch = db.batch()
     collection_ref = db.collection(koleksiyon_adi)
@@ -44,7 +43,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     
     # Silme işlemini onayla
     batch.commit()
-    print(f"   🧹 {silinen_sayisi} eski kayıt silindi.")
+    print(f"    {silinen_sayisi} eski kayıt silindi.")
 
     # 2. Adım: Yeni verileri ekle
     # Yeni bir batch başlatalım
@@ -56,12 +55,12 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
         batch.set(doc_ref, veri)
         
     batch.commit()
-    print(f"   💾 {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
+    print(f"    {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
 
 
 # --- 1. MODÜL: DUYURULARI ÇEK ---
 def son_duyuruyu_cek():
-    print("🚀 1/3: Duyurular Taranıyor...")
+    print(" 1/3: Duyurular Taranıyor...")
     base_url = "http://www.isparta.gov.tr"
     url = "http://www.isparta.gov.tr/duyurular"
 
@@ -88,15 +87,15 @@ def son_duyuruyu_cek():
             # Firestore'a gönder (Koleksiyon adı: duyurular)
             firestore_guncelle("duyurular", duyuru_listesi)
         else:
-            print("❌ Duyuru bulunamadı.")
+            print(" Duyuru bulunamadı.")
 
     except Exception as e:
-        print(f"❌ Duyuru Hatası: {e}")
+        print(f" Duyuru Hatası: {e}")
 
 
 # --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK ---
 def eczaneleri_cek():
-    print("🚀 2/3: Eczaneler Taranıyor...")
+    print(" 2/3: Eczaneler Taranıyor...")
     url = "https://www.eczaneler.gen.tr/nobetci-isparta"
 
     try:
@@ -147,12 +146,12 @@ def eczaneleri_cek():
             firestore_guncelle("eczaneler", eczane_listesi)
             
     except Exception as e:
-        print(f"❌ Eczane Hatası: {e}")
+        print(f" Eczane Hatası: {e}")
 
 
 # --- 3. MODÜL: ETKİNLİKLERİ ÇEK ---
 def etkinlikleri_cek():
-    print("🚀 3/3: Etkinlikler Taranıyor...")
+    print(" 3/3: Etkinlikler Taranıyor...")
     base_url = "https://www.bubilet.com.tr" 
     url = "https://www.bubilet.com.tr/isparta"
 
@@ -190,20 +189,19 @@ def etkinlikleri_cek():
             except: continue
 
         if etkinlik_listesi:
-            # Firestore'a gönder (Koleksiyon adı: etkinlikler)
             firestore_guncelle("etkinlikler", etkinlik_listesi)
 
     except Exception as e:
-        print(f"❌ Etkinlik Hatası: {e}")
+        print(f" Etkinlik Hatası: {e}")
 
 
 # --- ANA BLOK ---
 if __name__ == "__main__":
-    print("🤖 FIREBASE BOTU BAŞLATILIYOR...\n")
+    print(" FIREBASE BOTU BAŞLATILIYOR...\n")
     t0 = time.time()
     
     son_duyuruyu_cek()
     eczaneleri_cek()
     etkinlikleri_cek()
     
-    print(f"🏁 İŞLEM TAMAMLANDI! ({round(time.time() - t0, 2)} sn)")
+    print(f" İŞLEM TAMAMLANDI! ({round(time.time() - t0, 2)} sn)")
