@@ -28,15 +28,13 @@ HEADERS = {
 def firestore_guncelle(koleksiyon_adi, veri_listesi):
     """
     Belirtilen koleksiyondaki eski verileri siler ve yeni listeyi yükler.
+    Silme işlemini 500'lük batch'ler halinde yapar.
     """
     print(f" '{koleksiyon_adi}' koleksiyonu güncelleniyor...")
     
-    # 1. Adım: Eski dökümanları sil
     collection_ref = db.collection(koleksiyon_adi)
     
-    # Silme işlemi için birden fazla toplu işlem (batch) gerekebilir,
-    # çünkü tek bir batch 500 işlemle sınırlıdır.
-    
+    # 1. Adım: Eski dökümanları sil
     while True:
         docs = collection_ref.limit(500).stream()
         silinecek_docs = list(docs)
@@ -57,7 +55,6 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     yeni_batch = db.batch()
     
     for veri in veri_listesi:
-        # Yeni bir döküman referansı oluştur
         doc_ref = collection_ref.document() 
         yeni_batch.set(doc_ref, veri)
         
@@ -65,7 +62,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     print(f"    {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
 
 
-# --- 1. MODÜL: DUYURULARI ÇEK ---
+# --- 1. MODÜL: DUYURULARI ÇEK (Aynı Kaldı) ---
 def son_duyuruyu_cek():
     print(" 1/3: Duyurular Taranıyor...")
     base_url = "http://www.isparta.gov.tr"
@@ -103,47 +100,76 @@ def son_duyuruyu_cek():
         print(f" Duyuru Hatası: {e}")
 
 
-# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (EN GÜNCEL KAYNAK İLE) ---
+# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (YENİ HMTL YAPISINA GÖRE GÜNCELLENDİ) ---
 def eczaneleri_cek():
-    print(" 2/3: Eczaneler Taranıyor... (ispartaeo.org.tr)")
-    url = "https://www.ispartaeo.org.tr/nobetci-eczaneler"
+    print(" 2/3: Eczaneler Taranıyor... (eczaneler.gen.tr'nin kart yapısı hedefleniyor)")
+    # URL, önceki denemelerdeki gibi eczeneler.gen.tr olarak bırakıldı.
+    url = "https://www.eczaneler.gen.tr/nobetci-isparta"
 
     try:
         response = requests.get(url, headers=HEADERS, timeout=20, verify=False)
         response.raise_for_status() 
         soup = BeautifulSoup(response.content, "html.parser")
         
-        # Eczacı Odası sitesinde veriler tablo içinde olduğu için, tabloyu buluyoruz
-        tablo = soup.find("table", class_="table")
+        # 1. Adım: Aktif sekme ID'sini bul
+        aktif_tab_id = "nav-bugun"  
+        for link in soup.find_all("a", class_="nav-link"):
+            if link.find("img"): 
+                href = link.get("href")
+                if href and href.startswith("#"): 
+                    aktif_tab_id = href.replace("#", "")
+                    break
+
+        aktif_kutu = soup.find("div", id=aktif_tab_id)
         
-        if not tablo:
-            print(" ❌ Hata: Eczane tablosu bulunamadı.")
-            return
+        if not aktif_kutu: 
+             print(f" ❌ Hata: Aktif eczane sekmesi ID'si ({aktif_tab_id}) bulunamadı veya boş.")
+             return
 
-        # Sadece tbody içindeki tr satırlarını çek
-        eczane_satirlari = tablo.find("tbody").find_all("tr")
+        # 2. Adım: Paylaşılan HTML yapısını hedefle: <div class="trend-content">
+        eczaneler_kartlari = aktif_kutu.find_all("div", class_="trend-content")
+        
+        print(f" [DEBUG] Toplam bulunan eczane kartı: {len(eczaneler_kartlari)}")
 
-        if not eczane_satirlari:
-            print(" ❌ Hata: Eczane tablosunda satır bulunamadı.")
-            return
+        if not eczaneler_kartlari:
+             print(" ❌ Hata: 'trend-content' yapısına sahip kart bulunamadı.")
+             return
 
         eczane_listesi = []
         
-        for satir in eczane_satirlari:
-            # Her satırdaki sütunları (td) çek
-            sutunlar = satir.find_all("td")
-            
-            # 4 sütun (İlçe, Ad, Telefon, Adres) olmalı
-            if len(sutunlar) < 4: continue 
-            
+        for kart in eczaneler_kartlari:
             try:
-                # Sütun sırası: [0: İlçe, 1: Eczane Adı, 2: Telefon, 3: Adres]
-                ilce = sutunlar[0].text.strip()
-                eczane_adi = sutunlar[1].text.strip()
-                telefon = sutunlar[2].text.strip()
-                adres = sutunlar[3].text.strip()
+                # Eczane Adı: <h3 class="theme">
+                eczane_adi_tag = kart.find("h3", class_="theme")
+                # İlçe: <h5>
+                ilce_tag = kart.find("h5")
                 
-                # Sadece geçerli telefon numarası olanları al (en az 7 rakam içeren)
+                # Adres ve Telefon <p class="mb-2"> etiketlerinde
+                paragraflar = kart.find_all("p", class_="mb-2")
+                
+                # Temel kontroller
+                if not eczane_adi_tag or not ilce_tag or len(paragraflar) < 2:
+                    print(" [DEBUG] Eksik etiketler nedeniyle kart atlandı.")
+                    continue
+
+                eczane_adi = eczane_adi_tag.text.strip()
+                ilce = ilce_tag.text.strip()
+                
+                # Adres Çekme (İlk <p class="mb-2">)
+                adres_p = paragraflar[0]
+                # i etiketini kaldır (konum ikonu)
+                for i_tag in adres_p.find_all('i'):
+                    i_tag.decompose()
+                adres = adres_p.text.strip()
+
+                # Telefon Çekme (İkinci <p class="mb-2">)
+                telefon_p = paragraflar[1]
+                # i etiketini kaldır (telefon ikonu)
+                for i_tag in telefon_p.find_all('i'):
+                    i_tag.decompose()
+                telefon = telefon_p.text.strip()
+                
+                # Regex ile temiz telefon kontrolü (En az 7 rakam içeren)
                 if re.search(r'\d{7,}', telefon):
                     eczane_listesi.append({
                         "eczane_adi": eczane_adi,
@@ -155,7 +181,7 @@ def eczaneleri_cek():
                     print(f" [DEBUG] Telefonu geçersiz eczane atlandı: {eczane_adi}")
 
             except Exception as e:
-                print(f" [DEBUG] Tekil eczane işleme hatası: {e}")
+                print(f" [DEBUG] Tekil eczane işleme hatası ({eczane_adi}): {e}")
                 continue
 
         if eczane_listesi:
@@ -170,7 +196,7 @@ def eczaneleri_cek():
         print(f" Eczane Hatası: {e}")
 
 
-# --- 3. MODÜL: ETKİNLİKLERİ ÇEK ---
+# --- 3. MODÜL: ETKİNLİKLERİ ÇEK (Aynı Kaldı) ---
 def etkinlikleri_cek():
     print(" 3/3: Etkinlikler Taranıyor...")
     base_url = "https://www.bubilet.com.tr" 
