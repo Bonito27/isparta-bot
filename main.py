@@ -5,7 +5,7 @@ import time
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-import re # Eczane telefon numarası kontrolü için
+import re 
 
 # --- 1. FIREBASE BAĞLANTISI ---
 try:
@@ -91,85 +91,62 @@ def son_duyuruyu_cek():
         print(f" Duyuru Hatası: {e}")
 
 
-# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (HATA AYIKLAMA EKLENDİ) ---
+# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (YENİ KAYNAK VE MANTIK) ---
 def eczaneleri_cek():
-    print(" 2/3: Eczaneler Taranıyor...")
-    url = "https://www.eczaneler.gen.tr/nobetci-isparta"
+    print(" 2/3: Eczaneler Taranıyor... (ispartaeo.org.tr)")
+    # 🔥 YENİ KAYNAK
+    url = "https://www.ispartaeo.org.tr/nobetci-eczaneler"
 
     try:
         response = requests.get(url, headers=HEADERS, timeout=20, verify=False)
         response.raise_for_status() 
         soup = BeautifulSoup(response.content, "html.parser")
         
-        # 1. Adım: Aktif sekme ID'sini bul
-        aktif_tab_id = "nav-bugun" 
-        for link in soup.find_all("a", class_="nav-link"):
-            if link.find("img"): 
-                href = link.get("href")
-                if href and href.startswith("#"): 
-                    aktif_tab_id = href.replace("#", "")
-                    break
-
-        aktif_kutu = soup.find("div", id=aktif_tab_id)
+        # Eczacı Odası sitesinde veriler tablo içinde olduğu için, tabloyu buluyoruz
+        tablo = soup.find("table", class_="table")
         
-        # 🔥🔥🔥 HATA AYIKLAMA (1): Sekme bulundu mu? 🔥🔥🔥
-        if not aktif_kutu: 
-             print(f" ❌ Hata: Aktif eczane sekmesi ID'si ({aktif_tab_id}) bulunamadı veya boş. Veri çekilemiyor.")
-             return
-        else:
-             print(f" ✅ Aktif sekme içeriği bulundu: {aktif_tab_id}")
+        if not tablo:
+            print(" ❌ Hata: Eczane tablosu bulunamadı.")
+            return
+
+        eczane_satirlari = tablo.find("tbody").find_all("tr")
+
+        if not eczane_satirlari:
+            print(" ❌ Hata: Eczane tablosunda satır bulunamadı.")
+            return
 
         eczane_listesi = []
-        satirlar = aktif_kutu.find_all("div", class_="row")
-
-        # 🔥🔥🔥 HATA AYIKLAMA (2): Kaç satır bulundu? 🔥🔥🔥
-        print(f" [DEBUG] Toplam bulunan eczane satırı: {len(satirlar)}")
-
-        for satir in satirlar:
+        
+        # Tablo mantığı ile veri çekme
+        for satir in eczane_satirlari:
+            # Her satırdaki sütunları (td) çek
+            sutunlar = satir.find_all("td")
+            
+            # Sütun sırası tahmini: [0: İlçe, 1: Eczane Adı, 2: Telefon, 3: Adres]
+            if len(sutunlar) < 4: continue 
+            
             try:
-                ilce_tag = satir.find("span", class_="bg-info")
-                if not ilce_tag: continue
-                ilce = ilce_tag.text.strip()
+                ilce = sutunlar[0].text.strip()
+                eczane_adi = sutunlar[1].text.strip()
+                telefon = sutunlar[2].text.strip()
+                adres = sutunlar[3].text.strip()
                 
-                link_tag = satir.find("a")
-                if not link_tag: continue
-                eczane_adi = link_tag.text.strip()
-                
-                sutunlar = satir.find_all("div", class_=lambda x: x and ('col-lg-3' in x or 'col-lg-6' in x))
-                
-                telefon = "Yok"
-                adres = ""
-                
-                # Telefon çekme mantığı
-                if len(sutunlar) >= 2:
-                    aday_telefon = sutunlar[1].text.strip()
-                    # En az 3 rakam içeren bir metin ise telefon kabul et
-                    if re.search(r'\d{3,}', aday_telefon): 
-                         telefon = aday_telefon
-                
-                # Adres çekme
-                adres_col = satir.find("div", class_="col-lg-6")
-                if adres_col:
-                    adres = adres_col.text.strip().replace(ilce, "").strip()
+                # Sadece geçerli telefon numarası olanları al (en az 7 rakam içeren)
+                if re.search(r'\d{7,}', telefon):
+                    eczane_listesi.append({
+                        "eczane_adi": eczane_adi,
+                        "telefon": telefon,
+                        "adres": adres,
+                        "ilce": ilce
+                    })
+                else:
+                    print(f" [DEBUG] Telefonu geçersiz eczane atlandı: {eczane_adi}")
 
-                # Telefon bilgisi çekilemediyse bu kaydı atla
-                if telefon == "Yok" or not telefon.strip():
-                    # 🔥🔥🔥 HATA AYIKLAMA (3): Telefon bulunamazsa konsola yazdır 🔥🔥🔥
-                    print(f" [DEBUG] Telefon bilgisi eksik/geçersiz, '{eczane_adi}' atlanıyor.")
-                    continue
-
-                eczane_listesi.append({
-                    "eczane_adi": eczane_adi,
-                    "telefon": telefon,
-                    "adres": adres,
-                    "ilce": ilce
-                })
             except Exception as e:
-                print(f" [DEBUG] Tekil eczane işleme hatası ({eczane_adi}): {e}")
+                print(f" [DEBUG] Tekil eczane işleme hatası: {e}")
                 continue
 
         if eczane_listesi:
-             # 🔥🔥🔥 HATA AYIKLAMA (4): Sonuç listesi doluysa göster 🔥🔥🔥
             print(f" [DEBUG] Firestore'a gönderilecek kayıt sayısı: {len(eczane_listesi)}")
             firestore_guncelle("eczaneler", eczane_listesi)
         else:
@@ -181,7 +158,7 @@ def eczaneleri_cek():
         print(f" Eczane Hatası: {e}")
 
 
-# --- 3. MODÜL: ETKİNLİKLERİ ÇEK (₺ Temizleme Eklendi) ---
+# --- 3. MODÜL: ETKİNLİKLERİ ÇEK (Aynı kaldı) ---
 def etkinlikleri_cek():
     print(" 3/3: Etkinlikler Taranıyor...")
     base_url = "https://www.bubilet.com.tr" 
