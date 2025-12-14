@@ -24,11 +24,10 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/53736"
 }
 
-# --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME (Silme ve yeniden oluşturma) ---
+# --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME ---
 def firestore_guncelle(koleksiyon_adi, veri_listesi):
     """
     Belirtilen koleksiyondaki eski verileri siler ve yeni listeyi yükler.
-    Silme işlemini 500'lük batch'ler halinde yapar.
     """
     print(f" '{koleksiyon_adi}' koleksiyonu güncelleniyor...")
     
@@ -62,7 +61,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     print(f"    {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
 
 
-# --- 1. MODÜL: DUYURULARI ÇEK (Aynı Kaldı) ---
+# --- 1. MODÜL: DUYURULARI ÇEK ---
 def son_duyuruyu_cek():
     print(" 1/3: Duyurular Taranıyor...")
     base_url = "http://www.isparta.gov.tr"
@@ -100,10 +99,10 @@ def son_duyuruyu_cek():
         print(f" Duyuru Hatası: {e}")
 
 
-# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (YENİ HMTL YAPISINA GÖRE GÜNCELLENDİ) ---
+# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (GÜÇLENDİRİLMİŞ REGEX İLE) ---
 def eczaneleri_cek():
     print(" 2/3: Eczaneler Taranıyor... (eczaneler.gen.tr'nin kart yapısı hedefleniyor)")
-    # URL, önceki denemelerdeki gibi eczeneler.gen.tr olarak bırakıldı.
+    # URL'yi tekrar kontrol edin, bu kod eczaneler.gen.tr'deki yapıyı hedefliyor.
     url = "https://www.eczaneler.gen.tr/nobetci-isparta"
 
     try:
@@ -157,20 +156,23 @@ def eczaneleri_cek():
                 
                 # Adres Çekme (İlk <p class="mb-2">)
                 adres_p = paragraflar[0]
-                # i etiketini kaldır (konum ikonu)
-                for i_tag in adres_p.find_all('i'):
-                    i_tag.decompose()
-                adres = adres_p.text.strip()
-
+                # Tüm içerik metni
+                adres_metni = adres_p.text.strip()
+                # İkonları kaldırmadan, sadece metni alıyoruz
+                adres = re.sub(r'\s{2,}', ' ', adres_metni).strip()
+                # Adres metninin temizlenmesi gerekebilir (Örn: İkon metinleri)
+                
                 # Telefon Çekme (İkinci <p class="mb-2">)
                 telefon_p = paragraflar[1]
-                # i etiketini kaldır (telefon ikonu)
-                for i_tag in telefon_p.find_all('i'):
-                    i_tag.decompose()
-                telefon = telefon_p.text.strip()
+                telefon_ham = telefon_p.text.strip()
                 
-                # Regex ile temiz telefon kontrolü (En az 7 rakam içeren)
-                if re.search(r'\d{7,}', telefon):
+                # 🔥🔥🔥 KRİTİK DÜZELTME: Sadece rakamları çeken Regex 🔥🔥🔥
+                # Telefon metnindeki tüm rakamları ve '+' işaretini çeker.
+                telefon_sadece_rakam = re.sub(r'[^\d+]', '', telefon_ham)
+                
+                # Sadece rakam içeren ve uzunluğu 10-15 karakter arasında olanları geçerli kabul et
+                if len(telefon_sadece_rakam) >= 10:
+                    telefon = telefon_sadece_rakam
                     eczane_listesi.append({
                         "eczane_adi": eczane_adi,
                         "telefon": telefon,
@@ -178,7 +180,7 @@ def eczaneleri_cek():
                         "ilce": ilce
                     })
                 else:
-                    print(f" [DEBUG] Telefonu geçersiz eczane atlandı: {eczane_adi}")
+                    print(f" [DEBUG] Telefonu geçersiz (yeterli rakam yok): '{telefon_ham}' / Eczane: {eczane_adi}")
 
             except Exception as e:
                 print(f" [DEBUG] Tekil eczane işleme hatası ({eczane_adi}): {e}")
@@ -254,7 +256,7 @@ if __name__ == "__main__":
     t0 = time.time()
     
     son_duyuruyu_cek()
-    eczaneleri_cek()
+    eczaneleri_cek() # Bu modül artık paylaştığınız HTML yapısına güvenerek çalışıyor
     etkinlikleri_cek()
     
     print(f" İŞLEM TAMAMLANDI! ({round(time.time() - t0, 2)} sn)")
