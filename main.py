@@ -24,34 +24,44 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/53736"
 }
 
-# --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME ---
+# --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME (Silme ve yeniden oluşturma) ---
 def firestore_guncelle(koleksiyon_adi, veri_listesi):
     """
     Belirtilen koleksiyondaki eski verileri siler ve yeni listeyi yükler.
     """
     print(f" '{koleksiyon_adi}' koleksiyonu güncelleniyor...")
     
-    batch = db.batch()
+    # 1. Adım: Eski dökümanları sil
     collection_ref = db.collection(koleksiyon_adi)
-
-    # 1. Adım: Eski dökümanları sil (Temizlik)
-    docs = collection_ref.limit(500).stream()
-    silinen_sayisi = 0
-    for doc in docs:
-        batch.delete(doc.reference)
-        silinen_sayisi += 1
     
-    batch.commit()
-    print(f"    {silinen_sayisi} eski kayıt silindi.")
+    # Silme işlemi için birden fazla toplu işlem (batch) gerekebilir,
+    # çünkü tek bir batch 500 işlemle sınırlıdır.
+    
+    while True:
+        docs = collection_ref.limit(500).stream()
+        silinecek_docs = list(docs)
+        if not silinecek_docs:
+            break
+
+        silme_batch = db.batch()
+        for doc in silinecek_docs:
+            silme_batch.delete(doc.reference)
+        
+        silme_batch.commit()
+        print(f"    {len(silinecek_docs)} eski kayıt silindi.")
+        
+        if len(silinecek_docs) < 500:
+            break
 
     # 2. Adım: Yeni verileri ekle
-    batch = db.batch()
+    yeni_batch = db.batch()
     
     for veri in veri_listesi:
+        # Yeni bir döküman referansı oluştur
         doc_ref = collection_ref.document() 
-        batch.set(doc_ref, veri)
+        yeni_batch.set(doc_ref, veri)
         
-    batch.commit()
+    yeni_batch.commit()
     print(f"    {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
 
 
@@ -80,7 +90,9 @@ def son_duyuruyu_cek():
                     "link": full_link,
                     "tarih": firestore.SERVER_TIMESTAMP 
                 })
-            except: continue
+            except Exception as e: 
+                print(f" [DEBUG] Duyuru işleme hatası: {e}")
+                continue
 
         if duyuru_listesi:
             firestore_guncelle("duyurular", duyuru_listesi)
@@ -91,10 +103,9 @@ def son_duyuruyu_cek():
         print(f" Duyuru Hatası: {e}")
 
 
-# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (YENİ KAYNAK VE MANTIK) ---
+# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (EN GÜNCEL KAYNAK İLE) ---
 def eczaneleri_cek():
     print(" 2/3: Eczaneler Taranıyor... (ispartaeo.org.tr)")
-    # 🔥 YENİ KAYNAK
     url = "https://www.ispartaeo.org.tr/nobetci-eczaneler"
 
     try:
@@ -109,6 +120,7 @@ def eczaneleri_cek():
             print(" ❌ Hata: Eczane tablosu bulunamadı.")
             return
 
+        # Sadece tbody içindeki tr satırlarını çek
         eczane_satirlari = tablo.find("tbody").find_all("tr")
 
         if not eczane_satirlari:
@@ -117,15 +129,15 @@ def eczaneleri_cek():
 
         eczane_listesi = []
         
-        # Tablo mantığı ile veri çekme
         for satir in eczane_satirlari:
             # Her satırdaki sütunları (td) çek
             sutunlar = satir.find_all("td")
             
-            # Sütun sırası tahmini: [0: İlçe, 1: Eczane Adı, 2: Telefon, 3: Adres]
+            # 4 sütun (İlçe, Ad, Telefon, Adres) olmalı
             if len(sutunlar) < 4: continue 
             
             try:
+                # Sütun sırası: [0: İlçe, 1: Eczane Adı, 2: Telefon, 3: Adres]
                 ilce = sutunlar[0].text.strip()
                 eczane_adi = sutunlar[1].text.strip()
                 telefon = sutunlar[2].text.strip()
@@ -158,7 +170,7 @@ def eczaneleri_cek():
         print(f" Eczane Hatası: {e}")
 
 
-# --- 3. MODÜL: ETKİNLİKLERİ ÇEK (Aynı kaldı) ---
+# --- 3. MODÜL: ETKİNLİKLERİ ÇEK ---
 def etkinlikleri_cek():
     print(" 3/3: Etkinlikler Taranıyor...")
     base_url = "https://www.bubilet.com.tr" 
@@ -189,7 +201,7 @@ def etkinlikleri_cek():
                 ham_isim = yazi_kutusu.text
                 temiz_isim = ham_isim.replace(tarih, "").replace(mekan, "").replace(fiyat.replace(" TL",""),"").replace("TL","").strip()
                 
-                # 🔥 DÜZELTME: Sanatçı adından "₺" işaretini ve son boşlukları temizle
+                # "₺" Temizleme
                 sanatci_adi = temiz_isim.replace('₺', '').strip() 
                 
                 etkinlik_listesi.append({
