@@ -5,6 +5,7 @@ import time
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+import re # Düzenli ifadeler (Regex) için eklendi
 
 # --- 1. FIREBASE BAĞLANTISI ---
 try:
@@ -20,7 +21,7 @@ except Exception as e:
 # --- ORTAK AYARLAR ---
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/53736"
 }
 
 # --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME ---
@@ -58,7 +59,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     print(f"    {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
 
 
-# --- 1. MODÜL: DUYURULARI ÇEK ---
+# --- 1. MODÜL: DUYURULARI ÇEK (AYNI KALDI) ---
 def son_duyuruyu_cek():
     print(" 1/3: Duyurular Taranıyor...")
     base_url = "http://www.isparta.gov.tr"
@@ -66,6 +67,8 @@ def son_duyuruyu_cek():
 
     try:
         response = requests.get(url, headers=HEADERS, timeout=20, verify=False)
+        response.raise_for_status() # HTTP hatası varsa durdur
+
         soup = BeautifulSoup(response.content, "html.parser")
         duyuru_linkleri = soup.find_all("a", class_="announce-text")
         
@@ -79,12 +82,11 @@ def son_duyuruyu_cek():
                 duyuru_listesi.append({
                     "baslik": baslik,
                     "link": full_link,
-                    "tarih": firestore.SERVER_TIMESTAMP # Sunucu saati eklendi
+                    "tarih": firestore.SERVER_TIMESTAMP 
                 })
             except: continue
 
         if duyuru_listesi:
-            # Firestore'a gönder (Koleksiyon adı: duyurular)
             firestore_guncelle("duyurular", duyuru_listesi)
         else:
             print(" Duyuru bulunamadı.")
@@ -93,45 +95,68 @@ def son_duyuruyu_cek():
         print(f" Duyuru Hatası: {e}")
 
 
-# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK ---
+# --- 2. MODÜL: NÖBETÇİ ECZANELERİ ÇEK (GÜNCELLENDİ) ---
 def eczaneleri_cek():
     print(" 2/3: Eczaneler Taranıyor...")
     url = "https://www.eczaneler.gen.tr/nobetci-isparta"
 
     try:
         response = requests.get(url, headers=HEADERS, timeout=20, verify=False)
+        response.raise_for_status() 
         soup = BeautifulSoup(response.content, "html.parser")
         
-        # Bugünün sekmesini bul
-        tab_linkleri = soup.find_all("a", class_="nav-link")
-        aktif_tab_id = "nav-bugun"
-        for link in tab_linkleri:
-            if link.find("img"):
+        # 1. Adım: Aktif sekme ID'sini bul
+        aktif_tab_id = "nav-bugun" 
+        for link in soup.find_all("a", class_="nav-link"):
+            if link.find("img"): # İkonlu link, aktif sekmeyi temsil eder
                 href = link.get("href")
-                if href: aktif_tab_id = href.replace("#", "")
-                break
-        
+                if href and href.startswith("#"): 
+                    aktif_tab_id = href.replace("#", "")
+                    break
+
         aktif_kutu = soup.find("div", id=aktif_tab_id)
-        if not aktif_kutu: return
+        if not aktif_kutu: 
+             print(f" Hata: Aktif eczane sekmesi ({aktif_tab_id}) bulunamadı. Veri çekilemedi.")
+             return
 
         eczane_listesi = []
         satirlar = aktif_kutu.find_all("div", class_="row")
 
         for satir in satirlar:
             try:
+                # İlçe (bg-info etiketi içinde)
                 ilce_tag = satir.find("span", class_="bg-info")
                 if not ilce_tag: continue
                 ilce = ilce_tag.text.strip()
                 
+                # Eczane Adı (link etiketi içinde)
                 link_tag = satir.find("a")
                 if not link_tag: continue
                 eczane_adi = link_tag.text.strip()
                 
-                sutunlar = satir.find_all("div", class_="col-lg-3")
-                telefon = sutunlar[1].text.strip() if len(sutunlar) >= 2 else (sutunlar[0].text.strip() if sutunlar else "Yok")
+                # Sütunları toplu çek
+                sutunlar = satir.find_all("div", class_=lambda x: x and ('col-lg-3' in x or 'col-lg-6' in x))
                 
+                telefon = "Yok"
+                adres = ""
+                
+                # 🔥 Telefon bilgisi (Genellikle 2. sütun, col-lg-3)
+                if len(sutunlar) >= 2:
+                    aday_telefon = sutunlar[1].text.strip()
+                    # İçinde yeterince rakam varsa telefon kabul et
+                    if re.search(r'\d{3,}', aday_telefon): 
+                         telefon = aday_telefon
+                
+                # 🔥 Adres bilgisi (Genellikle en uzun sütun, col-lg-6)
                 adres_col = satir.find("div", class_="col-lg-6")
-                adres = adres_col.text.strip().replace(ilce, "").strip() if adres_col else ""
+                if adres_col:
+                    # Adres metninden ilçe adını çıkar
+                    adres = adres_col.text.strip().replace(ilce, "").strip()
+
+                # Telefon bilgisi çekilemediyse bu kaydı atla (Stabilite için)
+                if telefon == "Yok":
+                    print(f" [DEBUG] Telefon bilgisi eksik, {eczane_adi} atlanıyor.")
+                    continue
 
                 eczane_listesi.append({
                     "eczane_adi": eczane_adi,
@@ -139,17 +164,23 @@ def eczaneleri_cek():
                     "adres": adres,
                     "ilce": ilce
                 })
-            except: continue
+            except Exception as e:
+                # Bir eczaneyi işlerken hata oluşursa konsola yazdır
+                print(f" [DEBUG] Tekil eczane işleme hatası: {e}")
+                continue
 
         if eczane_listesi:
-            # Firestore'a gönder (Koleksiyon adı: eczaneler)
             firestore_guncelle("eczaneler", eczane_listesi)
+        else:
+             print(" Eczane bulunamadı veya çekilen liste boş.")
             
+    except requests.RequestException as req_e:
+        print(f" Eczane Hatası (Ağ/HTTP): {req_e}")
     except Exception as e:
         print(f" Eczane Hatası: {e}")
 
 
-# --- 3. MODÜL: ETKİNLİKLERİ ÇEK ---
+# --- 3. MODÜL: ETKİNLİKLERİ ÇEK (GÜNCELLENDİ) ---
 def etkinlikleri_cek():
     print(" 3/3: Etkinlikler Taranıyor...")
     base_url = "https://www.bubilet.com.tr" 
@@ -157,6 +188,7 @@ def etkinlikleri_cek():
 
     try:
         response = requests.get(url, headers=HEADERS, timeout=20)
+        response.raise_for_status()
         soup = BeautifulSoup(response.content, "html.parser")
         tarih_etiketleri = soup.find_all("p", class_="mt-0.5 text-xs text-gray-500")
         
@@ -179,14 +211,20 @@ def etkinlikleri_cek():
                 ham_isim = yazi_kutusu.text
                 temiz_isim = ham_isim.replace(tarih, "").replace(mekan, "").replace(fiyat.replace(" TL",""),"").replace("TL","").strip()
                 
+                # 🔥🔥🔥 DÜZELTME: Sanatçı adından "₺" işaretini ve son boşlukları temizle 🔥🔥🔥
+                sanatci_adi = temiz_isim.replace('₺', '').strip() 
+                
                 etkinlik_listesi.append({
-                    "sanatci": temiz_isim,
+                    "sanatci": sanatci_adi,
                     "tarih": tarih,
                     "mekan": mekan,
                     "fiyat": fiyat,
                     "resim": resim_url
                 })
-            except: continue
+            except Exception as e:
+                 # Bir etkinliği işlerken hata oluşursa konsola yazdır
+                print(f" [DEBUG] Tekil etkinlik işleme hatası: {e}")
+                continue
 
         if etkinlik_listesi:
             firestore_guncelle("etkinlikler", etkinlik_listesi)
