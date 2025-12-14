@@ -24,10 +24,11 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/53736"
 }
 
-# --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME (Silme ve yeniden oluşturma) ---
+# --- YARDIMCI FONKSİYON: FIREBASE GÜNCELLEME (KOLEKSİYON OLUŞTURMA İHTİYACI YOK) ---
 def firestore_guncelle(koleksiyon_adi, veri_listesi):
     """
     Belirtilen koleksiyondaki eski verileri siler ve yeni listeyi yükler.
+    Koleksiyon yoksa otomatik olarak oluşturulur.
     """
     if not veri_listesi:
         print(f" '{koleksiyon_adi}' koleksiyonuna gönderilecek yeni veri yok. Güncelleme atlandı.")
@@ -38,6 +39,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     collection_ref = db.collection(koleksiyon_adi)
     
     # 1. Adım: Eski dökümanları sil
+    # Bu adım, koleksiyonun var olup olmamasından bağımsız olarak çalışır.
     while True:
         docs = collection_ref.limit(500).stream()
         silinecek_docs = list(docs)
@@ -55,6 +57,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
             break
 
     # 2. Adım: Yeni verileri ekle
+    # Firestore: Yeni döküman eklemek, koleksiyon yoksa OTOMATİK OLUŞTURUR.
     yeni_batch = db.batch()
     
     for veri in veri_listesi:
@@ -65,7 +68,7 @@ def firestore_guncelle(koleksiyon_adi, veri_listesi):
     print(f"    {len(veri_listesi)} yeni kayıt başarıyla yüklendi.\n")
 
 
-# --- 1. MODÜL: DUYURULARI ÇEK (Aynı Kaldı) ---
+# --- 1. MODÜL: DUYURULARI ÇEK ---
 def son_duyuruyu_cek():
     print(" 1/3: Duyurular Taranıyor...")
     base_url = "http://www.isparta.gov.tr"
@@ -110,99 +113,90 @@ def eczaneleri_cek():
 
     try:
         response = requests.get(url, headers=HEADERS, timeout=15, verify=False)
-        response.raise_for_status() # 4xx/5xx hatası varsa istisna fırlat
+        response.raise_for_status() 
 
         soup = BeautifulSoup(response.content, "html.parser")
         
-        # Günü bulma filtresi
-        tab_linkleri = soup.find_all("a", class_="nav-link")
-        aktif_tab_id = None
-        
-        for link in tab_linkleri:
-            ikon = link.find("img")
-            
-            if ikon:
-                href_degeri = link.get("href")
-                if href_degeri:
-                    aktif_tab_id = href_degeri.replace("#", "")
-                    print(f" [DEBUG] Aktif Sekme Tespit Edildi: {aktif_tab_id}")
+        # 1. Adım: Aktif sekme ID'sini bul
+        aktif_tab_id = "nav-bugun"  
+        for link in soup.find_all("a", class_="nav-link"):
+            if link.find("img"): 
+                href = link.get("href")
+                if href and href.startswith("#"): 
+                    aktif_tab_id = href.replace("#", "")
                     break
-        
-        if not aktif_tab_id:
-            aktif_tab_id = "nav-bugun"
-            print(f" [DEBUG] Aktif Sekme İkonu bulunamadı, varsayılan: {aktif_tab_id}")
-
 
         aktif_kutu = soup.find("div", id=aktif_tab_id)
         
-        if not aktif_kutu:
-            print(f" ❌ Hata: İçerik kutusu ({aktif_tab_id}) bulunamadı.")
-            return
+        if not aktif_kutu: 
+             print(f" ❌ Hata: İçerik kutusu ({aktif_tab_id}) bulunamadı.")
+             return
 
-        # Eczane satırları
-        eczane_satirlari = aktif_kutu.find_all("div", class_="row")
-        print(f" [DEBUG] Bu sekmede {len(eczane_satirlari)} adet satır bulundu.")
+        # 2. Adım: Paylaşılan HTML yapısını hedefle: <div class="trend-content">
+        eczaneler_kartlari = aktif_kutu.find_all("div", class_="trend-content")
         
+        print(f" [DEBUG] Toplam bulunan eczane kartı: {len(eczaneler_kartlari)}")
+
+        if not eczaneler_kartlari:
+             # Eğer trend-content kartları bulunamazsa, eski row/col yapısını da denemek isteyebilirsiniz.
+             # Ancak bu durumda, paylaştığınız son HTML yapısına göre kartları aramaya devam edelim.
+             print(" ❌ Hata: 'trend-content' yapısına sahip kart bulunamadı.")
+             return
+
         eczane_listesi = []
-
-        for satir in eczane_satirlari:
+        
+        for kart in eczaneler_kartlari:
             try:
-                # İlçe filtresi
-                ilce_etiketi = satir.find("span", class_="bg-info")
-                if not ilce_etiketi: continue
-                ilce = ilce_etiketi.text.strip()
+                eczane_adi_tag = kart.find("h3", class_="theme")
+                ilce_tag = kart.find("h5")
+                paragraflar = kart.find_all("p", class_="mb-2")
                 
-                # Eczane Adı
-                link_etiketi = satir.find("a")
-                if not link_etiketi: continue
-                eczane_adi = link_etiketi.text.strip()
-                
-                # Telefon
-                sutunlar = satir.find_all("div", class_="col-lg-3")
-                telefon = "Telefon Yok"
-                if len(sutunlar) >= 2:
-                    telefon = sutunlar[1].text.strip()
-                elif len(sutunlar) == 1:
-                    telefon = sutunlar[0].text.strip()
-                
-                # Adres
-                adres_sutunu = satir.find("div", class_="col-lg-6")
-                if adres_sutunu:
-                    raw_adres = adres_sutunu.text.strip()
-                    adres = raw_adres.replace(ilce, "").strip() # Adresten ilçe ismini temizle
-                else:
-                    adres = "Adres Belirtilmemiş"
+                if not eczane_adi_tag or not ilce_tag or len(paragraflar) < 2:
+                    continue
 
-                # Telefon numarası geçerliliğini kontrol et (En az 7 rakam içermeli)
-                if re.search(r'\d{7,}', telefon):
-                    veri = {
+                eczane_adi = eczane_adi_tag.text.strip()
+                ilce = ilce_tag.text.strip()
+                
+                # Adres Çekme (İlk <p class="mb-2">)
+                adres_p = paragraflar[0]
+                adres_metni = adres_p.text.strip()
+                adres = re.sub(r'\s{2,}', ' ', adres_metni).strip()
+                
+                # Telefon Çekme (İkinci <p class="mb-2">)
+                telefon_p = paragraflar[1]
+                telefon_ham = telefon_p.text.strip()
+                
+                # Sadece rakamları çeken Regex ve geçerlilik kontrolü
+                telefon_sadece_rakam = re.sub(r'[^\d+]', '', telefon_ham)
+                
+                if len(telefon_sadece_rakam) >= 10:
+                    telefon = telefon_sadece_rakam
+                    eczane_listesi.append({
                         "eczane_adi": eczane_adi,
                         "telefon": telefon,
                         "adres": adres,
-                        "ilce": ilce,
-                    }
-                    eczane_listesi.append(veri)
+                        "ilce": ilce
+                    })
                 else:
-                    print(f" [DEBUG] Telefonu geçersiz (Regex hatası): '{telefon}' / Eczane: {eczane_adi}")
-
+                    print(f" [DEBUG] Telefonu geçersiz (yeterli rakam yok): '{telefon_ham}' / Eczane: {eczane_adi}")
 
             except Exception as e:
-                print(f" [DEBUG] Tekil eczane işleme hatası: {e} / Eczane: {eczane_adi if 'eczane_adi' in locals() else 'Bilinmiyor'}")
+                print(f" [DEBUG] Tekil eczane işleme hatası ({eczane_adi if 'eczane_adi' in locals() else 'Bilinmiyor'}): {e}")
                 continue
 
         if eczane_listesi:
             print(f" [DEBUG] Firestore'a gönderilecek kayıt sayısı: {len(eczane_listesi)}")
             firestore_guncelle("eczaneler", eczane_listesi)
         else:
-            print(" Eczane bulunamadı veya çekilen liste boş.")
-
+             print(" Eczane bulunamadı veya çekilen liste boş.")
+            
     except requests.RequestException as req_e:
         print(f" Eczane Hatası (Ağ/HTTP): {req_e}")
     except Exception as e:
         print(f" Eczane Hatası: {e}")
 
 
-# --- 3. MODÜL: ETKİNLİKLERİ ÇEK (Aynı Kaldı) ---
+# --- 3. MODÜL: ETKİNLİKLERİ ÇEK ---
 def etkinlikleri_cek():
     print(" 3/3: Etkinlikler Taranıyor...")
     base_url = "https://www.bubilet.com.tr" 
